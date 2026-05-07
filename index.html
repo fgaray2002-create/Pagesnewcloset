@@ -247,9 +247,19 @@
     // 3. RENDERIZAR
     function renderProducts() {
         const grid = document.getElementById('product-grid');
+    
+        if (allProducts.length === 0) {
+            grid.innerHTML = `
+                <div style="text-align:center; grid-column: 1/-1; padding: 50px;">
+                    <p>No se encontraron productos con links de imagen válidos.</p>
+                    <p style="font-size:0.8rem; color:gray;">Revisá que los links en la Columna F empiecen con http</p>
+                </div>`;
+            return;
+        }
+
         grid.innerHTML = allProducts.map((p, index) => `
             <div class="product-card" onclick="openModal(${index})">
-                <img src="${p.mainImg}" alt="${p.name}">
+                <img src="${p.mainImg}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/450x600?text=Error+en+Link+de+Imagen'">
                 <div class="product-info">
                     <h3>${p.name}</h3>
                     <p class="price">$${p.price}</p>
