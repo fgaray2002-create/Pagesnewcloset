@@ -219,30 +219,36 @@
     }
 
     function parseCSV(text) {
-        // Dividimos por filas y quitamos la primera (encabezado)
         const rows = text.split('\n').slice(1); 
 
         allProducts = rows.map(row => {
-            // Definimos 'cols' correctamente usando una expresión regular que ignora comas entre comillas
-            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim());
+            // Separamos por comas ignorando las que están dentro de comillas
+            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => {
+                let clean = cell.replace(/^"|"$/g, '').trim();
+                // LÓGICA DE LIMPIEZA: Si el link viene con [link](url), nos quedamos solo con la url
+                if (clean.includes('](')) {
+                    clean = clean.split('](')[1].replace(')', '');
+                }
+                return clean;
+            });
         
-           // Verificamos que la fila tenga al menos el nombre (columna B / índice 1)
-           if (cols.length < 2 || !cols[1]) return null;
+            if (cols.length < 2) return null;
 
-           return {
-               id: cols[0],
-               name: cols[1],
-               price: cols[2],
-               colors: cols[3] ? cols[3].split('|').map(c => c.trim()) : [],
-               sizes: cols[4] ? cols[4].split('|').map(t => t.trim()) : [],
-               // Validamos que sea un link; si no, queda vacío para no tirar 404
-               mainImg: (cols[5] && cols[5].startsWith('http')) ? cols[5] : '',
-               colorImgs: cols[6] ? cols[6].split('|').map(img => img.trim()) : [],
-               inStock: cols[7] ? cols[7].trim().toUpperCase() === 'S' : true
-           };
-       }).filter(p => p !== null && p.mainImg !== ''); // Filtramos filas vacías o sin imagen
+            // Buscamos la columna que tenga el link
+            const imageIndex = cols.findIndex(c => c.toLowerCase().includes('googleusercontent.com'));
 
-       renderProducts();
+            return {
+                name: cols[1] || "Sin Nombre",
+                price: cols[2] || "0",
+                colors: cols[3] ? cols[3].split('|').map(c => c.trim()) : [],
+                sizes: cols[4] ? cols[4].split('|').map(t => t.trim()) : [],
+                mainImg: imageIndex !== -1 ? cols[imageIndex] : "",
+                colorImgs: (imageIndex !== -1 && cols[imageIndex + 1]) ? cols[imageIndex + 1].split('|').map(img => img.trim()) : [],
+                inStock: cols[cols.length - 1]?.trim().toUpperCase() !== 'N' 
+            };
+        }).filter(p => p !== null && p.mainImg.startsWith('http'));
+
+        renderProducts();
     }
     // 3. RENDERIZAR
     function renderProducts() {
