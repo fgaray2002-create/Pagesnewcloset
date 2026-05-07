@@ -219,23 +219,31 @@
     }
 
     function parseCSV(text) {
-        const lines = text.split('\n').slice(1); // Quitamos cabecera
-        allProducts = lines.map(line => {
-            const cells = line.split(','); 
-            return {
-                id: cols[0],
-                nombre: cols[1],
-                precio: cols[2],
-                colores: cols[3] ? cols[3].split('|').map(c => c.trim()) : [],
-                talles: cols[4] ? cols[4].split('|').map(t => t.trim()) : [], // Fíjate que es el índice 4
-                imagen: cols[5] ? cols[5].trim() : '', // La imagen DEBE ser el índice 5 (Columna F)
-                imagenes_colores: cols[6] ? cols[6].split('|').map(img => img.trim()) : [],
-                stock: cols[7] ? cols[7].trim().toUpperCase() : 'S'
-            };
-        }).filter(p => p.name);
-        renderProducts();
-    }
+        // Dividimos por filas y quitamos la primera (encabezado)
+        const rows = text.split('\n').slice(1); 
 
+        allProducts = rows.map(row => {
+            // Definimos 'cols' correctamente usando una expresión regular que ignora comas entre comillas
+            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim());
+        
+           // Verificamos que la fila tenga al menos el nombre (columna B / índice 1)
+           if (cols.length < 2 || !cols[1]) return null;
+
+           return {
+               id: cols[0],
+               name: cols[1],
+               price: cols[2],
+               colors: cols[3] ? cols[3].split('|').map(c => c.trim()) : [],
+               sizes: cols[4] ? cols[4].split('|').map(t => t.trim()) : [],
+               // Validamos que sea un link; si no, queda vacío para no tirar 404
+               mainImg: (cols[5] && cols[5].startsWith('http')) ? cols[5] : '',
+               colorImgs: cols[6] ? cols[6].split('|').map(img => img.trim()) : [],
+               inStock: cols[7] ? cols[7].trim().toUpperCase() === 'S' : true
+           };
+       }).filter(p => p !== null && p.mainImg !== ''); // Filtramos filas vacías o sin imagen
+
+       renderProducts();
+    }
     // 3. RENDERIZAR
     function renderProducts() {
         const grid = document.getElementById('product-grid');
