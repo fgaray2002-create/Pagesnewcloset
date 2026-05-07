@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewCloset | Exclusive Collection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark: #1a1a1a;
+            --light: #fdfbf7;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--light); color: var(--dark); overflow-x: hidden; }
+
+        /* HEADER */
+        header {
+            background-color: var(--white);
+            padding: 30px;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        header h1 span { color: var(--gold); }
+
+        /* GRILLA DE PRODUCTOS */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        
+        #product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .product-card {
+            background: var(--white);
+            border: 1px solid #eee;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            text-align: center;
+            padding-bottom: 20px;
+        }
+
+        .product-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+
+        .product-card img { width: 100%; height: 450px; object-fit: cover; display: block; }
+
+        .product-info h3 { font-family: 'Playfair Display', serif; margin: 15px 0 5px; font-size: 1.4rem; }
+
+        .price { color: var(--gold); font-weight: 600; font-size: 1.2rem; }
+
+        /* MODAL DE DETALLE */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-content {
+            display: flex;
+            max-width: 1100px;
+            margin: 40px auto;
+            background: white;
+            position: relative;
+        }
+
+        .close-modal {
+            position: fixed;
+            top: 20px; right: 40px;
+            font-size: 3rem;
+            cursor: pointer;
+            color: var(--gold);
+            z-index: 2001;
+        }
+
+        /* LÓGICA DE LUPA */
+        .image-container {
+            flex: 1.2;
+            position: relative;
+            overflow: visible; /* Para que la lupa se vea fuera */
+        }
+
+        #main-image { width: 100%; cursor: crosshair; border: 1px solid #f0f0f0; }
+
+        #zoom-window {
+            position: absolute;
+            left: 105%; /* Aparece a la derecha */
+            top: 0;
+            width: 500px;
+            height: 500px;
+            border: 2px solid var(--gold);
+            background-repeat: no-repeat;
+            display: none;
+            z-index: 100;
+            background-color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* PANEL DE DETALLES */
+        .details-panel { flex: 0.8; padding: 0 50px; }
+
+        .details-panel h2 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 10px; }
+
+        .gold-line { width: 60px; height: 3px; background: var(--gold); margin-bottom: 20px; }
+
+        .selector-group { margin-bottom: 25px; }
+
+        label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            font-family: 'Montserrat', sans-serif;
+            appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="gold"><polygon points="0,0 10,0 5,7"/></svg>') no-repeat 95% center;
+        }
+
+        .btn-whatsapp {
+            background-color: var(--gold);
+            color: white;
+            width: 100%;
+            padding: 20px;
+            border: none;
+            font-weight: 600;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-whatsapp:hover { background-color: #b38f2d; transform: scale(1.02); }
+
+        .no-stock { color: #888; font-style: italic; margin-top: 20px; text-align: center; border: 1px solid #ddd; padding: 10px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .modal-content { flex-direction: column; }
+            .details-panel { padding: 30px 0; }
+            #zoom-window { display: none !important; } /* Sin lupa en móviles */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>New<span>Closet</span></h1>
+</header>
+
+<div class="container">
+    <div id="product-grid">
+        </div>
+</div>
+
+<div id="product-modal" class="modal">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <div class="modal-content">
+        <div class="image-container" id="img-cont">
+            <img id="main-image" src="" alt="">
+            <div id="zoom-window"></div>
+        </div>
+        <div class="details-panel">
+            <h2 id="modal-title"></h2>
+            <div class="gold-line"></div>
+            <p id="modal-price" class="price"></p>
+            
+            <div class="selector-group">
+                <label>Color Disponible</label>
+                <select id="color-select" onchange="changeColor()"></select>
+            </div>
+
+            <div class="selector-group">
+                <label>Talle</label>
+                <select id="size-select"></select>
+            </div>
+
+            <div id="stock-container"></div>
+            <button id="btn-buy" class="btn-whatsapp" onclick="orderWhatsApp()">RESERVAR POR WHATSAPP</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. CONFIGURACIÓN (Tu ID de Google Sheets)
+    const SHEET_ID = '1-K--QwKKTzi5nQRQjKQyP88YfDpJBz4ShFMfz_gM0Fk';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+    let allProducts = [];
+    let selectedProduct = null;
+
+    // 2. CARGAR DATOS
+    async function init() {
+        try {
+            const response = await fetch(CSV_URL);
+            const data = await response.text();
+            parseCSV(data);
+        } catch (err) {
+            console.error("Error al conectar con Drive:", err);
+        }
+    }
+
+    function parseCSV(text) {
+        const lines = text.split('\n').slice(1); // Quitamos cabecera
+        allProducts = lines.map(line => {
+            const cells = line.split(','); 
+            return {
+                id: cells[0],
+                name: cells[1],
+                price: cells[2],
+                colors: cells[3] ? cells[3].split('|') : [],
+                sizes: cells[4] ? cells[4].split('|') : [],
+                mainImg: cells[5],
+                colorImgs: cells[6] ? cells[6].split('|') : [],
+                inStock: cells[7] ? cells[7].trim().toUpperCase() === 'S' : true
+            };
+        }).filter(p => p.name);
+        renderProducts();
+    }
+
+    // 3. RENDERIZAR
+    function renderProducts() {
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = allProducts.map((p, index) => `
+            <div class="product-card" onclick="openModal(${index})">
+                <img src="${p.mainImg}" alt="${p.name}">
+                <div class="product-info">
+                    <h3>${p.name}</h3>
+                    <p class="price">$${p.price}</p>
+                    ${!p.inStock ? '<p style="color:red; font-size:0.7rem;">SIN STOCK</p>' : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 4. LÓGICA MODAL
+    function openModal(index) {
+        selectedProduct = allProducts[index];
+        const modal = document.getElementById('product-modal');
+        
+        document.getElementById('modal-title').innerText = selectedProduct.name;
+        document.getElementById('modal-price').innerText = `$${selectedProduct.price}`;
+        document.getElementById('main-image').src = selectedProduct.mainImg;
+
+        // Cargar selects
+        document.getElementById('color-select').innerHTML = selectedProduct.colors.map((c, i) => `<option value="${i}">${c}</option>`).join('');
+        document.getElementById('size-select').innerHTML = selectedProduct.sizes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+        // Control de Stock
+        const btn = document.getElementById('btn-buy');
+        const stockInfo = document.getElementById('stock-container');
+        if (selectedProduct.inStock) {
+            btn.style.display = 'block';
+            stockInfo.innerHTML = '';
+        } else {
+            btn.style.display = 'none';
+            stockInfo.innerHTML = '<div class="no-stock">No disponible actualmente</div>';
+        }
+
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        setupZoom();
+    }
+
+    function closeModal() {
+        document.getElementById('product-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function changeColor() {
+        const idx = document.getElementById('color-select').value;
+        if (selectedProduct.colorImgs[idx]) {
+            document.getElementById('main-image').src = selectedProduct.colorImgs[idx];
+            setupZoom(); // Reset zoom con nueva foto
+        }
+    }
+
+    // 5. LÓGICA DE WHATSAPP
+    function orderWhatsApp() {
+        const color = selectedProduct.colors[document.getElementById('color-select').value];
+        const talle = document.getElementById('size-select').value;
+        const num = "5491100000000"; // PONÉ TU NÚMERO AQUÍ SIN EL +
+        const msg = encodeURIComponent(`Hola NewCloset! ✨ Quiero el vestido: ${selectedProduct.name}\nColor: ${color}\nTalle: ${talle}\nPrecio: $${selectedProduct.price}`);
+        window.open(`https://wa.me/${num}?text=${msg}`);
+    }
+
+    // 6. LÓGICA DE LUPA (ZOOM)
+    function setupZoom() {
+        const img = document.getElementById('main-image');
+        const zoom = document.getElementById('zoom-window');
+
+        img.onmousemove = function(e) {
+            zoom.style.display = "block";
+            const rect = img.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Mover el fondo del zoom
+            zoom.style.backgroundImage = `url(${img.src})`;
+            zoom.style.backgroundSize = `${img.width * 2}px ${img.height * 2}px`;
+            zoom.style.backgroundPosition = `-${x * 2 - zoom.offsetWidth/2}px -${y * 2 - zoom.offsetHeight/2}px`;
+        };
+
+        img.onmouseleave = function() {
+            zoom.style.display = "none";
+        };
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
