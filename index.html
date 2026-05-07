@@ -223,14 +223,14 @@
         allProducts = lines.map(line => {
             const cells = line.split(','); 
             return {
-                id: cells[0],
-                name: cells[1],
-                price: cells[2],
-                colors: cells[3] ? cells[3].split('|') : [],
-                sizes: cells[4] ? cells[4].split('|') : [],
-                mainImg: cells[5],
-                colorImgs: cells[6] ? cells[6].split('|') : [],
-                inStock: cells[7] ? cells[7].trim().toUpperCase() === 'S' : true
+                id: cols[0],
+                nombre: cols[1],
+                precio: cols[2],
+                colores: cols[3] ? cols[3].split('|').map(c => c.trim()) : [],
+                talles: cols[4] ? cols[4].split('|').map(t => t.trim()) : [], // Fíjate que es el índice 4
+                imagen: cols[5] ? cols[5].trim() : '', // La imagen DEBE ser el índice 5 (Columna F)
+                imagenes_colores: cols[6] ? cols[6].split('|').map(img => img.trim()) : [],
+                stock: cols[7] ? cols[7].trim().toUpperCase() : 'S'
             };
         }).filter(p => p.name);
         renderProducts();
